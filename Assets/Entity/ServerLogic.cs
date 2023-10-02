@@ -1,11 +1,15 @@
 using System;
+using System.Text;
 using UnityEngine;
 
 public class ServerLogic
 {
     private static readonly int delay_threshold = 5000;
+    private static readonly int jitter_threshold = 150;
     public Player[] players;
     public bool[] change_trigger;
+    
+    
     public ServerLogic()
     {
         players = PlayerManager.GetTemplate(0);
@@ -27,17 +31,33 @@ public class ServerLogic
             Debug.Log($"invalid packet: {timeDelta} ms");
             return;
         }
-        players[packet_in.src].CopyFromClient(packet_in.instruction);
-        change_trigger[packet_in.src] = true;
+        var player = players[packet_in.src];
+        if (player.TryUpdateTime(packet_in.time))
+        {
+            // player.CopyFromClient(packet_in.instruction, 
+            //     packet_in.instruction.DistanceSqr(player) < Mathf.Pow(jitter_threshold / 1000f * player.speed,2));
+
+            player.CopyFromClient(packet_in.instruction, true);
+            change_trigger[packet_in.src] = true;
+        }
     }
     
     public void Update()
     {
+        if (players[1].CollideWith(players[2]))
+        {
+            players[1].hp = 0;
+            change_trigger[1] = true;
+        }
+        
         foreach (var player in players)
         {
             if(player == null)
                 continue;
-            player.Update();
+            if (player.Update())
+            {
+                change_trigger[player.id] = true;
+            }
             if (!change_trigger[player.id])
             {
                 continue;
@@ -51,14 +71,25 @@ public class ServerLogic
                     dst = client.id,
                     instruction = new Player(player.id),
                 };
-                packet.instruction.CopyFromServer(player, true);
+                packet.instruction.CopyFrom(player, true);
                 NetworkManager.Send(packet);
             }
+            change_trigger[player.id] = false;
         }
-
-        if (players[1].CollideWith(players[2]))
+    }
+    
+    public override string ToString()
+    {
+        StringBuilder sb = new StringBuilder();
+        sb.Append("server");
+        // sb.Append("\t ping:");
+        // sb.Append(ping);
+        sb.Append("\n");
+        foreach (var player in players)
         {
-            players[1].hp = 0;
+            sb.Append(player);
+            sb.Append("\n");
         }
+        return sb.ToString();
     }
 }

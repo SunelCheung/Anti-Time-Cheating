@@ -5,34 +5,44 @@ using UnityEngine.UI;
 public class ClientProxy : MonoBehaviour
 {
     public int id;
-    public Transform bg;
+    private Transform bg;
     private Dictionary<int, PlayerProxy> playerProxies = new();
     private Transform localPlayer;
     public Text txt_debug;
     
     public void Awake()
     {
-        if (id == 0)
-        {
-            Debug.LogError("id can't be 0");
-            return;
-        }
         bg = transform.Find("Bg");
         bg.localScale = new Vector3(Player.x_max - Player.x_min, Player.y_max - Player.y_min, 1);
-        localPlayer = transform.Find($"Player{id}");
-        localPlayer.gameObject.GetOrAddComponent<PlayerProxy>().player = MainModule.Clients[id-1].players[0];
-        foreach (var player in MainModule.Clients[id-1].players)
+        if (id == 0)
         {
-            if (player.id == id || player.id == 0) 
-                continue;
-            var tf = transform.Find($"Player{player.id}");
-            playerProxies[player.id] = tf.gameObject.GetOrAddComponent<PlayerProxy>();
-            playerProxies[player.id].player = player;
+            foreach (var player in MainModule.Server.players)
+            {
+                if (player == null) 
+                    continue;
+                var tf = transform.Find($"Player{player.id}");
+                playerProxies[player.id] = tf.gameObject.GetOrAddComponent<PlayerProxy>();
+                playerProxies[player.id].player = player;
+            }
+            txt_debug.color = Color.yellow;
+        }
+        else
+        {
+            localPlayer = transform.Find($"Player{id}");
+            localPlayer.gameObject.GetOrAddComponent<PlayerProxy>().player = MainModule.Clients[id-1].players[0];
+            foreach (var player in MainModule.Clients[id-1].players)
+            {
+                if (player.id == id || player.id == 0) 
+                    continue;
+                var tf = transform.Find($"Player{player.id}");
+                playerProxies[player.id] = tf.gameObject.GetOrAddComponent<PlayerProxy>();
+                playerProxies[player.id].player = player;
+            }
         }
     }
 
     public void Update()
     {
-        txt_debug.text = MainModule.Clients[id-1].ToString();
+        txt_debug.text = id == 0 ? MainModule.Server.ToString() : MainModule.Clients[id-1].ToString();
     }
 }

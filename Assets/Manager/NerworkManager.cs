@@ -14,25 +14,10 @@ public class NetworkPacket
     public Player instruction;
 }
 
-// public class NetworkPacketComparer : IComparer<NetworkPacket>
-// {
-//     public int Compare(NetworkPacket x, NetworkPacket y)
-//     {
-//         return x.time.CompareTo(y.time);
-//     }
-// }
-
-// public void SortEventsByTime()
-// {
-//     List<NetworkPacket> eventsList = packetQueue.ToList();
-//     eventsList.Sort(new NetworkPacketComparer());
-//     packetQueue = new ConcurrentQueue<NetworkPacket>(eventsList);
-// }
-
 public static class NetworkManager
 {
-    public static int delayMin = 1;
-    public static int delayMax = 40;
+    public static int delayMin = 80;
+    public static int delayMax = 500;
     private static Random random = new Random();
     private static Dictionary<int, Action<NetworkPacket>> callback = new(){{0, null}, {1, null}, {2, null}};
 
