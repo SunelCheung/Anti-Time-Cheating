@@ -19,45 +19,45 @@ using UnityEngine;
             
             if (Input.GetKey(KeyCode.W))
             {
-                LocalPlayer[0].direction = Direction.Up;
+                LocalPlayer[0].SetDir(Direction.Up);
             }
             else if(Input.GetKey(KeyCode.S))
             {
-                LocalPlayer[0].direction = Direction.Down;
+                LocalPlayer[0].SetDir(Direction.Down);
             }
             else if(Input.GetKey(KeyCode.A))
             {
-                LocalPlayer[0].direction = Direction.Left;
+                LocalPlayer[0].SetDir(Direction.Left);
             }
             else if(Input.GetKey(KeyCode.D))
             {
-                LocalPlayer[0].direction = Direction.Right;
+                LocalPlayer[0].SetDir(Direction.Right);
             }
             else
             {
-                LocalPlayer[0].direction = Direction.None;
+                LocalPlayer[0].SetDir(Direction.None);
                 IsDown[0] = false;
             }
             
             if(Input.GetKey(KeyCode.UpArrow))
             {
-                LocalPlayer[1].direction = Direction.Up;
+                LocalPlayer[1].SetDir(Direction.Up);
             }
             else if(Input.GetKey(KeyCode.DownArrow))
             {
-                LocalPlayer[1].direction = Direction.Down;
+                LocalPlayer[1].SetDir(Direction.Down);
             }
             else if(Input.GetKey(KeyCode.LeftArrow))
             {
-                LocalPlayer[1].direction = Direction.Left;
+                LocalPlayer[1].SetDir(Direction.Left);
             }
             else if(Input.GetKey(KeyCode.RightArrow))
             {
-                LocalPlayer[1].direction = Direction.Right;
+                LocalPlayer[1].SetDir(Direction.Right);
             }
             else
             {
-                LocalPlayer[1].direction = Direction.None;
+                LocalPlayer[1].SetDir(Direction.None);
                 IsDown[1] = false;
             }
 
@@ -69,13 +69,6 @@ using UnityEngine;
                 }
                 MainModule.Clients[i].local_operation = IsDown[i];
             }
-            // MainModule.Clients[0].local_operation = IsDown[0];
-            // MainModule.Clients[1].local_operation = IsDown[1];
-            // LocalPlayer[1].speed = IsDown[0] ? Player.speed_max : 0;
-            //     ? Player.speed_max : 0
-            // foreach (var player in LocalPlayer)
-            // {
-            //     player.speed = IsDown[player.id] ? Player.speed_max : 0;
-            // }
+            
         }
     }

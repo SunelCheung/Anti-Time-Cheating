@@ -16,7 +16,7 @@ public class ClientProxy : MonoBehaviour
         bg.localScale = new Vector3(Player.x_max - Player.x_min, Player.y_max - Player.y_min, 1);
         if (id == 0)
         {
-            foreach (var player in MainModule.Server.players)
+            foreach (var player in MainModule.Server.world.playerDict.Values)
             {
                 if (player == null) 
                     continue;
@@ -29,8 +29,8 @@ public class ClientProxy : MonoBehaviour
         else
         {
             localPlayer = transform.Find($"Player{id}");
-            localPlayer.gameObject.GetOrAddComponent<PlayerProxy>().player = MainModule.Clients[id-1].players[0];
-            foreach (var player in MainModule.Clients[id-1].players)
+            localPlayer.gameObject.GetOrAddComponent<PlayerProxy>().player = MainModule.Clients[id-1].localPlayer;
+            foreach (var player in MainModule.Clients[id-1].world.playerDict.Values)
             {
                 if (player.id == id || player.id == 0) 
                     continue;

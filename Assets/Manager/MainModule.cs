@@ -4,6 +4,7 @@ using UnityEngine.UI;
 
 public class MainModule: MonoBehaviour
 {
+    public static readonly float frameInterval = 0.05f; // 固定间隔为 0.05 秒
     private static MainModule _instance;
     public MainModule Instance => _instance;
     
@@ -11,7 +12,6 @@ public class MainModule: MonoBehaviour
     public static PlayerProxy PlayerProxy;
     public static ClientLocal[] Clients = { new ClientLocal(1), new ClientLocal(2) };
     public static ServerLogic Server = new ServerLogic();
-    public static readonly float frameInterval = 0.05f; // 固定间隔为 0.05 秒
     private static float lastFixedTime = 0f;
     private static int _frame = 0;
     public int Frame => _frame;

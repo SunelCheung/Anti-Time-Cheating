@@ -8,16 +8,26 @@ using Random = System.Random;
 
 public class NetworkPacket
 {
+    public int id;
+    public Type type;
     public DateTime time = DateTime.Now;
     public int src;
     public int dst;
-    public Player instruction;
+    public object content;
+    
+    public enum Type
+    {
+        Command,
+        State,
+        Ack,
+    }
 }
+
 
 public static class NetworkManager
 {
-    public static int delayMin = 80;
-    public static int delayMax = 500;
+    public static int delayMin = 1;
+    public static int delayMax = 50;
     private static Random random = new Random();
     private static Dictionary<int, Action<NetworkPacket>> callback = new(){{0, null}, {1, null}, {2, null}};
 
