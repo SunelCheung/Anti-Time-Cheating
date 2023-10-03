@@ -55,23 +55,27 @@ public class ServerLogic
     {
         bool update = false;
         realtimeFrame++;
-        for (int i = world.frame + 1; i <= realtimeFrame - min_window_size; i++)
+        for (int i = world.frame; i < realtimeFrame - min_window_size; i++)
         {
-            bool instArrive = true;
-            if (realtimeFrame - i < max_window_size)
+            bool allArrive = true;
+            if (realtimeFrame - world.frame < max_window_size)
             {
                 foreach (var player in world.playerDict.Values)
                 {
-                    instArrive &= unExecInst[player.id].ContainsKey(i);
+                    if (!unExecInst[player.id].ContainsKey(world.frame + 1))
+                    {
+                        allArrive = false;
+                        break;
+                    }
                 }
             }
-
-            if (instArrive)
+            
+            if (allArrive)
             {
                 foreach (var player in world.playerDict.Values)
                 {
-                    player.inst = unExecInst[player.id][i];
-                    unExecInst[player.id].Remove(i);
+                    if(unExecInst[player.id].TryGetValue(world.frame + 1, out player.inst))
+                        unExecInst[player.id].Remove(world.frame + 1);
                 }
                 world.Update();
                 update = true;

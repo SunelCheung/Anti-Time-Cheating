@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 public class MainModule: MonoBehaviour
 {
-    public static readonly float frameInterval = 0.05f; // 固定间隔为 0.05 秒
+    public static readonly float frameInterval = 0.05f;
     private static MainModule _instance;
     public MainModule Instance => _instance;
     
@@ -13,8 +13,8 @@ public class MainModule: MonoBehaviour
     public static ClientLocal[] Clients = { new(1), new(2) };
     public static ServerLogic Server = new();
     private static float lastFixedTime = 0f;
-    private static int _frame = 0;
-    public int Frame => _frame;
+    // private static int _frame = 0;
+    // public int Frame => _frame;
 
     public void Awake()
     {
@@ -40,7 +40,6 @@ public class MainModule: MonoBehaviour
         //     _frame += 1;
             if (Time.fixedTime - lastFixedTime >= frameInterval)
             {
-                // 执行固定间隔操作
                 lastFixedTime = Time.fixedTime;
                 foreach (var client in Clients)
                 {

@@ -33,16 +33,9 @@ public class ClientLocal
         switch (packet.type)
         {
             case NetworkPacket.Type.State:
-                var state = packet.content as World;
-                unack_inst.Remove(state.frame);
-                if (state.frame > world.frame)
-                {
-                    world.CopyFrom(state);
-                }
-
+                Refresh(packet.content as World);
                 break;
             case NetworkPacket.Type.Ack:
-                // unack_inst.Remove((int)packet.content);
                 ping = (int)((DateTime.Now - last_sent_pkg_time) / 2).TotalMilliseconds;
                 break;
             default:
@@ -50,19 +43,32 @@ public class ClientLocal
         }
     }
 
+    public void Refresh(World remote_world)
+    {
+        if (remote_world.frame > world.frame)
+        {
+            for (int i = world.frame; i < remote_world.frame; i++)
+            {
+                unack_inst.Remove(i);
+            }
+            world.CopyFrom(remote_world);
+        }
+    }
+    
     public void Update()
     {
         currentFrame++;
-        
+        var nextOp = localPlayer.inst.Duplicate();
         var packet = new NetworkPacket
         {
             type = NetworkPacket.Type.Command,
             id = ++last_sent_pkg_id,
             src = id,
             dst = 0,
-            content = new Tuple<int, Player.Instruction> (currentFrame+1, localPlayer.inst.Duplicate()),
+            content = new Tuple<int, Player.Instruction> (currentFrame+1, nextOp),
         };
-        unack_inst[currentFrame+1] = localPlayer.inst.Duplicate();
+        if(nextOp != null)
+            unack_inst[currentFrame + 1] = nextOp;
         last_sent_pkg_time = packet.time;
         NetworkManager.Send(packet);
         
@@ -78,10 +84,14 @@ public class ClientLocal
                     localPlayer.inst = instruction.Duplicate();
                 }
                 localPlayer.Update();
+                // if(id==2)
+                //     Debug.LogError($"{currentFrame}  {localPlayer.frame}  {localPlayer}");
             }
-            
         }
-
+        else if (unack_inst.Count == 0)
+        {
+            localPlayer.CopyFrom(world.playerDict[id]);
+        }
     }
 
     public override string ToString()

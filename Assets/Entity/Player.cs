@@ -16,6 +16,10 @@ public static class Manager
     {
         if (src == null)
             return null;
+        if (src.direction == Direction.None && !src.shooting)
+        {
+            return null;
+        }
         var inst = new Player.Instruction();
         inst.CopyFrom(src);
         
