@@ -34,12 +34,14 @@ public class ClientLocal
         {
             case NetworkPacket.Type.State:
                 var state = packet.content as World;
-                unack_inst.Remove(state.frame);
                 if (state.frame > world.frame)
                 {
+                    for (int i = world.frame; i < state.frame; i++)
+                    {
+                        unack_inst.Remove(i);
+                    }
                     world.CopyFrom(state);
                 }
-
                 break;
             case NetworkPacket.Type.Ack:
                 // unack_inst.Remove((int)packet.content);
@@ -78,10 +80,10 @@ public class ClientLocal
                     localPlayer.inst = instruction.Duplicate();
                 }
                 localPlayer.Update();
+                // if(id==2)
+                //     Debug.LogError($"{currentFrame}  {localPlayer.frame}  {localPlayer}");
             }
-            
         }
-
     }
 
     public override string ToString()

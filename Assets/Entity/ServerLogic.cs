@@ -55,14 +55,15 @@ public class ServerLogic
     {
         bool update = false;
         realtimeFrame++;
-        for (int i = world.frame + 1; i <= realtimeFrame - min_window_size; i++)
+        for (int i = world.frame; i < realtimeFrame - min_window_size; i++)
         {
-            bool instArrive = true;
-            if (realtimeFrame - i < max_window_size)
+            bool instArrive = false;
+            foreach (var player in world.playerDict.Values)
             {
-                foreach (var player in world.playerDict.Values)
+                if (unExecInst[player.id].ContainsKey(world.frame + 1))
                 {
-                    instArrive &= unExecInst[player.id].ContainsKey(i);
+                    instArrive = true;
+                    break;
                 }
             }
 
@@ -70,12 +71,12 @@ public class ServerLogic
             {
                 foreach (var player in world.playerDict.Values)
                 {
-                    player.inst = unExecInst[player.id][i];
-                    unExecInst[player.id].Remove(i);
+                    if(unExecInst[player.id].TryGetValue(world.frame + 1, out player.inst))
+                        unExecInst[player.id].Remove(world.frame + 1);
                 }
-                world.Update();
-                update = true;
             }
+            world.Update();
+            update = true;
         }
 
         if (update)
