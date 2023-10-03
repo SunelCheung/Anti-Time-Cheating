@@ -65,10 +65,10 @@ public class ClientLocal
             id = ++last_sent_pkg_id,
             src = id,
             dst = 0,
-            content = new Tuple<int, Player.Instruction> (currentFrame+1, nextOp),
+            content = new Tuple<int, Player.Instruction> (currentFrame, nextOp),
         };
         if(nextOp != null)
-            unack_inst[currentFrame + 1] = nextOp;
+            unack_inst[currentFrame] = nextOp;
         last_sent_pkg_time = packet.time;
         NetworkManager.Send(packet);
         
@@ -77,12 +77,9 @@ public class ClientLocal
             stop_trigger = false;
             localPlayer.CopyFrom(world.playerDict[id]);
             
-            for (int i = localPlayer.frame; i <= currentFrame; i++)
+            for (int i = localPlayer.frame; i < currentFrame; i++)
             {
-                if (unack_inst.TryGetValue(i + 1, out var instruction))
-                {
-                    localPlayer.inst = instruction.Duplicate();
-                }
+                localPlayer.inst = unack_inst.TryGetValue(i + 1, out var instruction) ? instruction.Duplicate() : null;
                 localPlayer.Update();
                 // if(id==2)
                 //     Debug.LogError($"{currentFrame}  {localPlayer.frame}  {localPlayer}");
