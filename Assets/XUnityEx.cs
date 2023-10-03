@@ -29,9 +29,9 @@ public static class XUnityEx
             EditorApplication.isPlaying = true;
         }
     }
-    private static readonly List<Transform> TempList = new List<Transform>();
-    private static List<string> PathCache = new List<string>();
-    private static StringBuilder StringBuilderCache = new StringBuilder();
+    private static readonly List<Transform> TempList = new();
+    private static List<string> PathCache = new();
+    private static StringBuilder StringBuilderCache = new();
 
     public static float Time => UnityEngine.Time.unscaledTime * UnityEngine.Time.timeScale;
 

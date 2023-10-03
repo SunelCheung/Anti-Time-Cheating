@@ -6,9 +6,10 @@ public static class Manager
 {
     public static void CopyFrom(this Player.Instruction dst, Player.Instruction src)
     {
-        // if (src == dst)
-        //     return;
+        if (src == dst)
+            return;
         dst.direction = src.direction;
+        dst.shooting = src.shooting;
     }
     
     public static Player.Instruction Duplicate(this Player.Instruction src)
@@ -16,7 +17,6 @@ public static class Manager
         if (src == null)
             return null;
         var inst = new Player.Instruction();
-            // {direction = src.direction};
         inst.CopyFrom(src);
         
         return inst;
@@ -29,7 +29,7 @@ public static class Manager
         foreach (var remote_player in src.playerDict.Values)
         {
             dst.playerDict[remote_player.id].CopyFrom(remote_player);
-            dst.playerDict[remote_player.id].currentFrame = src.frame;
+            dst.playerDict[remote_player.id].frame = src.frame;
         }
         dst.frame = src.frame;
     }
@@ -38,7 +38,6 @@ public static class Manager
     {
         if (src == dst)
             return;
-        
         dst.pos_x = src.pos_x;
         dst.pos_y = src.pos_y;
         dst.speed = src.speed;
@@ -46,6 +45,7 @@ public static class Manager
         dst.hp = src.hp;
 
         dst.inst = src.inst?.Duplicate();
+        dst.frame = src.frame;
     }
     
     public static double DistanceSqr(this Player src, Player dst)
@@ -65,7 +65,6 @@ public static class Manager
 
 public class Player
 {
-    public static readonly double threshold = 0.1;
     public static readonly float x_max = 5f;
     public static readonly float x_min = -x_max;
     public static readonly float y_max = 5f;
@@ -73,14 +72,13 @@ public class Player
     public static readonly float speed_max = 2f;
     
     public int id;
+    public int frame;
     public float pos_x;
     public float pos_y;
     public float speed = speed_max;
     public float radius = 0.5f;
     public int hp = 100;
-    public Instruction inst = new();
-
-    public int currentFrame = 0;
+    public Instruction inst;
     
     public class Instruction
     {
@@ -110,23 +108,23 @@ public class Player
     
     public void Update()
     {
-        currentFrame++;
+        frame++;
         if (IsDead || inst == null)
             return;
         speed = Mathf.Clamp(speed, 0, speed_max);
         switch (inst.direction)
         {
             case Direction.Up:
-                pos_x += speed * MainModule.frameInterval;
+                pos_y += speed * MainModule.frameInterval;
                 break;
             case Direction.Down:
-                pos_x -= speed * MainModule.frameInterval;
-                break;
-            case Direction.Left:
                 pos_y -= speed * MainModule.frameInterval;
                 break;
+            case Direction.Left:
+                pos_x -= speed * MainModule.frameInterval;
+                break;
             case Direction.Right:
-                pos_y += speed * MainModule.frameInterval;
+                pos_x += speed * MainModule.frameInterval;
                 break;
             default:
                 // changed = false;
@@ -147,7 +145,7 @@ public class Player
         sb.Append(" y:");
         sb.Append(pos_y.ToString("F2"));
         sb.Append(" ");
-        sb.Append(inst.direction);
+        sb.Append(inst?.direction);
         sb.Append(" speed:");
         sb.Append(speed.ToString("F2"));
         sb.Append(" hp:");

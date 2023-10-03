@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
-using Random = System.Random;
 
 public class NetworkPacket
 {
@@ -23,12 +22,11 @@ public class NetworkPacket
     }
 }
 
-
 public static class NetworkManager
 {
     public static int delayMin = 1;
     public static int delayMax = 50;
-    private static Random random = new Random();
+    private static System.Random random = new();
     private static Dictionary<int, Action<NetworkPacket>> callback = new(){{0, null}, {1, null}, {2, null}};
 
     private static ConcurrentQueue<NetworkPacket> packetQueue = new();

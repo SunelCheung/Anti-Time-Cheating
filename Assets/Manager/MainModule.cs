@@ -10,12 +10,11 @@ public class MainModule: MonoBehaviour
     
     public static InputManager InputManager;
     public static PlayerProxy PlayerProxy;
-    public static ClientLocal[] Clients = { new ClientLocal(1), new ClientLocal(2) };
-    public static ServerLogic Server = new ServerLogic();
+    public static ClientLocal[] Clients = { new(1), new(2) };
+    public static ServerLogic Server = new();
     private static float lastFixedTime = 0f;
     private static int _frame = 0;
     public int Frame => _frame;
-    // private static float runningTime = 0f;
 
     public void Awake()
     {

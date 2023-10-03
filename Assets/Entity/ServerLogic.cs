@@ -7,31 +7,30 @@ public class ServerLogic
 {
     private static readonly int max_acc_delay_ms = 5000;
     private static readonly int min_window_ms = 100;
-    private static readonly int min_window_size = (int)(min_window_ms *1.0f / MainModule.frameInterval / 1000);
-    private static readonly int max_window_size = (int)(max_acc_delay_ms*1.0f / MainModule.frameInterval / 1000);
+    private static readonly int min_window_size = (int)(min_window_ms / MainModule.frameInterval / 1000);
+    private static readonly int max_window_size = (int)(max_acc_delay_ms / MainModule.frameInterval / 1000);
     public World world = new();
 
     public int realtimeFrame;
     public int last_sent_package_id;
 
-    public Dictionary<int, Player.Instruction>[] unExecInst = new[]
-        { null, new Dictionary<int, Player.Instruction>(), new Dictionary<int, Player.Instruction>()};
-    public int[] pings = { 0, 0 ,0};
-    
+    public Dictionary<int, Player.Instruction>[] unExecInst = { null, new(), new() };
+    public int[] pings = { 0, 0, 0 };
+
     public ServerLogic()
     {
         NetworkManager.RegisterCb(0, ProcessPacket);
     }
-    
+
     private void ProcessPacket(NetworkPacket packet)
     {
         if (packet.src == 0)
         {
-            Debug.LogError($"invalid packet: feign to others");
+            Debug.LogError("invalid packet: feign to others");
             return;
         }
 
-        var timeDelta = (DateTime.Now - packet.time).Milliseconds;
+        var timeDelta = (int)(DateTime.Now - packet.time).TotalMilliseconds;
         if (timeDelta < 0 || timeDelta > max_acc_delay_ms)
         {
             Debug.Log($"invalid packet: {timeDelta} ms");
@@ -50,23 +49,13 @@ public class ServerLogic
             content = tuple.Item1,
         };
         NetworkManager.Send(ack_packet);
-
-        // var player = players[packet.src];
-        // if (player.TryUpdateTime(packet.time))
-        // {
-            // player.CopyFromClient(packet_in.instruction, 
-            //     packet_in.instruction.DistanceSqr(player) < Mathf.Pow(jitter_threshold / 1000f * player.speed,2));
-
-        //     player.CopyFromClient(packet.instruction, true);
-        //     change_trigger[packet.src] = true;
-        // }
     }
-    
+
     public void Update()
     {
         bool update = false;
         realtimeFrame++;
-        for (int i = world.frame; i < realtimeFrame - min_window_size; i++)
+        for (int i = world.frame + 1; i <= realtimeFrame - min_window_size; i++)
         {
             bool instArrive = true;
             if (realtimeFrame - i < max_window_size)
