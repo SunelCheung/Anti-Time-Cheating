@@ -18,13 +18,12 @@ public class ClientLocal
     public int currentFrame;
     private int last_ack_frame;
 
-    private bool suppress_correct;
+    private bool suppress_correct => MainModule.Instance.SuppressCorrect && id == 2;
 
     public ClientLocal(int id)
     {
         this.id = id;
         NetworkManager.RegisterCb(id, ProcessPacket);
-        suppress_correct = id == 2;
     }
 
     private void ProcessPacket(NetworkPacket packet)

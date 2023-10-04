@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using UnityEngine;
 
@@ -20,6 +19,8 @@ public class ServerLogic
     public Dictionary<int, Vector2>[] snapshot = { null, new(), new() };
     public int[] leftWindowIndex = { int.MaxValue ,0,0 };
     public bool[] reCalc = { false, false, false };
+
+    public static readonly bool Lockstep = MainModule.Instance.Lockstep;
 
     public ServerLogic()
     {
@@ -91,30 +92,32 @@ public class ServerLogic
     public void Update()
     {
         bool update = false;
-        
-        foreach (var player in world.playerDict.Values)
+        if (!Lockstep)
         {
-            if (reCalc[player.id])
+            foreach (var player in world.playerDict.Values)
             {
-                // Debug.LogError("-----");
-                world[player.id].pos = snapshot[player.id][leftWindowIndex[player.id]];
-
-                for (int i = leftWindowIndex[player.id]; i < world.frame; i++)
+                if (reCalc[player.id])
                 {
-                    instDict[player.id].TryGetValue(i + 1, out player.inst);
-                    player.UpdatePos();
-                    // if(player.inst)
-                    //     Debug.LogError($"{i+1}-{player}");
-                    TakeSnapshot(player, i);
+                    // Debug.LogError("-----");
+                    world[player.id].pos = snapshot[player.id][leftWindowIndex[player.id]];
+
+                    for (int i = leftWindowIndex[player.id]; i < world.frame; i++)
+                    {
+                        instDict[player.id].TryGetValue(i + 1, out player.inst);
+                        player.UpdatePos();
+                        // if(player.inst)
+                        //     Debug.LogError($"{i+1}-{player}");
+                        TakeSnapshot(player, i);
+                    }
+                    reCalc[player.id] = false;
                 }
-                reCalc[player.id] = false;
             }
         }
         
         for (int i = world.frame; i < realtimeFrame; i++)
         {
             bool allArrive = true;
-            if (realtimeFrame - world.frame < max_jitter_size)
+            if (realtimeFrame - world.frame < (Lockstep ? max_window_size : max_jitter_size))
             {
                 foreach (var player in world.playerDict.Values)
                 {
@@ -130,14 +133,37 @@ public class ServerLogic
             {
                 foreach (var player in world.playerDict.Values)
                 {
-                    instDict[player.id].TryGetValue(world.frame + 1, out player.inst);
+                    if (instDict[player.id].TryGetValue(world.frame + 1, out player.inst) && Lockstep)
+                    {
+                        instDict[player.id].Remove(world.frame + 1);
+                    }
                 }
-                TakeSnapshot();
+
+                if (!Lockstep)
+                {
+                    TakeSnapshot();
+                }
                 world.Update();
                 update = true;
             }
         }
 
+        if (!Lockstep)
+        {
+            foreach (var player in world.playerDict.Values)
+            {
+                for (int i = leftWindowIndex[player.id]; i < realtimeFrame; i++)
+                {
+                    if (instDict[player.id].ContainsKey(i + 1))
+                    {
+                        instDict[player.id].Remove(i+1);
+                        snapshot[player.id].Remove(i);
+                        leftWindowIndex[player.id]++;
+                    }
+                }
+            }
+        }
+        
         if (update)
         {
             foreach (var pair in world.playerDict)
@@ -153,79 +179,12 @@ public class ServerLogic
                 NetworkManager.Send(packet);
             }
         }
+        realtimeFrame++;
         
         if (world[1].CollideWith(world[2]))
         {
             world[1].hp = 0;
         }
-        
-        foreach (var player in world.playerDict.Values)
-        {
-            for (int i = leftWindowIndex[player.id]; i < realtimeFrame; i++)
-            {
-                
-                if (instDict[player.id].ContainsKey(i + 1))
-                {
-                    instDict[player.id].Remove(i+1);
-                    snapshot[player.id].Remove(i);
-                    leftWindowIndex[player.id]++;
-                }
-            }
-        }
-        realtimeFrame++;
-        
-        // sliding window lockstep --- start
-        // bool update = false;
-        // realtimeFrame++;
-        // for (int i = world.frame; i < realtimeFrame - min_window_size; i++)
-        // {
-        //     bool allArrive = true;
-        //     if (realtimeFrame - world.frame < max_window_size)
-        //     {
-        //         foreach (var player in world.playerDict.Values)
-        //         {
-        //             if (!unExecInst[player.id].ContainsKey(world.frame + 1))
-        //             {
-        //                 allArrive = false;
-        //                 break;
-        //             }
-        //         }
-        //     }
-        //     
-        //     if (allArrive)
-        //     {
-        //         foreach (var player in world.playerDict.Values)
-        //         {
-        //             if(unExecInst[player.id].TryGetValue(world.frame + 1, out player.inst))
-        //                 unExecInst[player.id].Remove(world.frame + 1);
-        //         }
-        //         world.Update();
-        //         update = true;
-        //     }
-        // }
-        //
-        // if (update)
-        // {
-        //     foreach (var pair in world.playerDict)
-        //     {
-        //         var packet = new NetworkPacket
-        //         {
-        //             id = ++last_sent_package_id,
-        //             src = 0,
-        //             dst = pair.Key,
-        //             type = NetworkPacket.Type.State,
-        //             content = world, // Note: this object can't be modified later!!
-        //         };
-        //         NetworkManager.Send(packet);
-        //     }
-        // }
-        //
-        // if (world[1].CollideWith(world[2]))
-        // {
-        //     world[1].hp = 0;
-        // }
-        
-        // sliding window lockstep ---- end
     }
     
     public override string ToString()
