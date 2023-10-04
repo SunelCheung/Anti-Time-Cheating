@@ -15,7 +15,7 @@ public class PlayerProxy : MonoBehaviour
         if (player == null)
             return;
         var tf = transform;
-        tf.localPosition = new Vector3(player.pos_x, player.pos_y, 0);
+        tf.localPosition = new Vector3(player.pos.x, player.pos.y, 0);
         tf.localScale = new Vector3(player.radius * 2, player.radius * 2, 1);
         if (player.IsDead)
         {

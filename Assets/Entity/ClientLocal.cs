@@ -7,20 +7,24 @@ using UnityEngine;
 public class ClientLocal
 {
     public int id;
-    public bool stop_trigger;
-    public bool local_operation = true;
-    public DateTime last_sent_pkg_time;
+    
+    public static readonly int drop_threshold = 120;
+    public Dictionary<int, DateTime> pkg_sent_time = new();
     public int ping;
     public World world = new();
     public Dictionary<int, Player.Instruction> unack_inst = new();
     public Player localPlayer = new(0);
     public int last_sent_pkg_id;
     public int currentFrame;
+    private int last_ack_frame;
+
+    private bool suppress_correct;
 
     public ClientLocal(int id)
     {
         this.id = id;
         NetworkManager.RegisterCb(id, ProcessPacket);
+        suppress_correct = id == 2;
     }
 
     private void ProcessPacket(NetworkPacket packet)
@@ -33,30 +37,39 @@ public class ClientLocal
         switch (packet.type)
         {
             case NetworkPacket.Type.State:
-                Refresh(packet.content as World);
+                world.CopyFrom(packet.content as World);
                 break;
             case NetworkPacket.Type.Ack:
-                ping = (int)((DateTime.Now - last_sent_pkg_time) / 2).TotalMilliseconds;
+                int frame = (int)packet.content;
+                ping = (int)((DateTime.Now - pkg_sent_time[frame]) / 2).TotalMilliseconds;
+                pkg_sent_time.Remove(frame);
+                unack_inst.Remove(frame);
                 break;
             default:
                 throw new InvalidDataException($"invalid packet:{packet.type}");
         }
     }
-
-    public void Refresh(World remote_world)
-    {
-        if (remote_world.frame > world.frame)
-        {
-            for (int i = world.frame; i < remote_world.frame; i++)
-            {
-                unack_inst.Remove(i);
-            }
-            world.CopyFrom(remote_world);
-        }
-    }
     
     public void Update()
     {
+        if (currentFrame - drop_threshold > last_ack_frame)
+        {
+            last_ack_frame = currentFrame - drop_threshold;
+            unack_inst.Remove(last_ack_frame);
+        }
+        else
+        {
+            for (int i = last_ack_frame; i < currentFrame; i++)
+            {
+                if (unack_inst.ContainsKey(i+1))
+                {
+                    break;
+                }
+            
+                last_ack_frame++;
+            }
+        }
+
         currentFrame++;
         var nextOp = localPlayer.inst.Duplicate();
         var packet = new NetworkPacket
@@ -69,25 +82,23 @@ public class ClientLocal
         };
         if(nextOp != null)
             unack_inst[currentFrame] = nextOp;
-        last_sent_pkg_time = packet.time;
-        NetworkManager.Send(packet);
+        pkg_sent_time[currentFrame] = packet.time;
+        NetworkManager.Send(packet, suppress_correct ? 4000 : 0);
         
-        if (local_operation || stop_trigger)
+        localPlayer.CopyFrom(world.playerDict[id]);
+        
+        for (int i = last_ack_frame; i < currentFrame; i++)
         {
-            stop_trigger = false;
-            localPlayer.CopyFrom(world.playerDict[id]);
-            
-            for (int i = localPlayer.frame; i < currentFrame; i++)
-            {
-                localPlayer.inst = unack_inst.TryGetValue(i + 1, out var instruction) ? instruction.Duplicate() : null;
-                localPlayer.Update();
-                // if(id==2)
-                //     Debug.LogError($"{currentFrame}  {localPlayer.frame}  {localPlayer}");
-            }
+            localPlayer.inst = unack_inst.TryGetValue(i + 1, out var instruction) ? instruction.Duplicate() : null;
+            localPlayer.Update();
         }
-        else if (unack_inst.Count == 0)
+
+        if (suppress_correct)
         {
-            localPlayer.CopyFrom(world.playerDict[id]);
+            if (localPlayer.CollideWith(world[1]))
+            {
+                NetworkManager.Release(2, 0);
+            }
         }
     }
 

@@ -1,5 +1,7 @@
 using System.Collections.Generic;
+using System.Numerics;
 using System.Text;
+using Vector2 = UnityEngine.Vector2;
 
 public class World
 {
@@ -9,8 +11,8 @@ public class World
 
     public World()
     {
-        var player1 = new Player(1){pos_x = Player.x_min,pos_y = Player.y_min};
-        var player2 = new Player(2){pos_x = Player.x_max,pos_y = Player.y_max};
+        var player1 = new Player(1){pos = new Vector2(Player.x_min / 2, Player.y_min / 2)};
+        var player2 = new Player(2){pos = new Vector2(Player.x_max / 2, Player.y_max / 2), speed = 1.5f};
         playerDict = new Dictionary<int, Player> { { 1, player1 }, { 2, player2 } };
     }
 

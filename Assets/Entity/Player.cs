@@ -42,8 +42,7 @@ public static class Manager
     {
         if (src == dst)
             return;
-        dst.pos_x = src.pos_x;
-        dst.pos_y = src.pos_y;
+        dst.pos = src.pos;
         dst.speed = src.speed;
         dst.radius = src.radius;
         dst.hp = src.hp;
@@ -56,7 +55,7 @@ public static class Manager
     {
         if (src == dst)
             return 0;
-        return Math.Pow(dst.pos_x - src.pos_x, 2) + Math.Pow(dst.pos_y - src.pos_y, 2);
+        return Math.Pow(dst.pos.x - src.pos.x, 2) + Math.Pow(dst.pos.y - src.pos.y, 2);
     }
     
     public static bool CollideWith(this Player src, Player dst)
@@ -77,8 +76,7 @@ public class Player
     
     public int id;
     public int frame;
-    public float pos_x;
-    public float pos_y;
+    public Vector2 pos;
     public float speed = speed_max;
     public float radius = 0.5f;
     public int hp = 100;
@@ -88,6 +86,8 @@ public class Player
     {
         public Direction direction = Direction.None;
         public bool shooting;
+
+        public static implicit operator bool(Instruction inst) => inst != null;
     }
 
     public bool IsDead => hp <= 0;
@@ -101,7 +101,7 @@ public class Player
 
     public void SetDir(Direction dir)
     {
-        if (dir == Direction.None && inst == null)
+        if (dir == Direction.None && !inst)
         {
             return;
         }
@@ -113,30 +113,35 @@ public class Player
     public void Update()
     {
         frame++;
-        if (IsDead || inst == null)
+        UpdatePos();
+    }
+
+    public void UpdatePos()
+    {
+        if (IsDead || !inst)
             return;
-        speed = Mathf.Clamp(speed, 0, speed_max);
+        // speed = Mathf.Clamp(speed, 0, speed_max);
         switch (inst.direction)
         {
             case Direction.Up:
-                pos_y += speed * MainModule.frameInterval;
+                pos.y += speed * MainModule.frameInterval;
                 break;
             case Direction.Down:
-                pos_y -= speed * MainModule.frameInterval;
+                pos.y -= speed * MainModule.frameInterval;
                 break;
             case Direction.Left:
-                pos_x -= speed * MainModule.frameInterval;
+                pos.x -= speed * MainModule.frameInterval;
                 break;
             case Direction.Right:
-                pos_x += speed * MainModule.frameInterval;
+                pos.x += speed * MainModule.frameInterval;
                 break;
             default:
                 // changed = false;
                 break;
         }
 
-        pos_x = Mathf.Clamp(pos_x, x_min + radius, x_max - radius);
-        pos_y = Mathf.Clamp(pos_y, y_min + radius, y_max - radius);
+        pos.x = Mathf.Clamp(pos.x, x_min + radius, x_max - radius);
+        pos.y = Mathf.Clamp(pos.y, y_min + radius, y_max - radius);
     }
     
     public override string ToString()
@@ -145,9 +150,9 @@ public class Player
         sb.Append("id = ");
         sb.Append(id);
         sb.Append(" x:");
-        sb.Append(pos_x.ToString("F2"));
+        sb.Append(pos.x.ToString("F2"));
         sb.Append(" y:");
-        sb.Append(pos_y.ToString("F2"));
+        sb.Append(pos.y.ToString("F2"));
         sb.Append(" ");
         sb.Append(inst?.direction);
         sb.Append(" speed:");

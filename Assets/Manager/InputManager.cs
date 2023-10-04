@@ -5,7 +5,6 @@ using UnityEngine;
     public class InputManager : MonoBehaviour
     {
         private Player[] LocalPlayer = new Player [2];
-        private Dictionary<int, bool> IsDown = new(){{0,true},{1,true}}; 
         public void Start()
         {
             LocalPlayer[0] = MainModule.Clients[0].localPlayer;
@@ -14,9 +13,6 @@ using UnityEngine;
 
         public void Update()
         {
-            IsDown[0] = true;
-            IsDown[1] = true;
-            
             if (Input.GetKey(KeyCode.W))
             {
                 LocalPlayer[0].SetDir(Direction.Up);
@@ -35,8 +31,8 @@ using UnityEngine;
             }
             else
             {
+                // LocalPlayer[0].SetDir(Direction.Right);
                 LocalPlayer[0].SetDir(Direction.None);
-                IsDown[0] = false;
             }
             
             if(Input.GetKey(KeyCode.UpArrow))
@@ -55,20 +51,13 @@ using UnityEngine;
             {
                 LocalPlayer[1].SetDir(Direction.Right);
             }
+            // else if (LocalPlayer[1].frame < 10)
+            // {
+            //     LocalPlayer[1].SetDir(Direction.Down);
+            // }
             else
             {
                 LocalPlayer[1].SetDir(Direction.None);
-                IsDown[1] = false;
             }
-
-            for (int i = 0; i < MainModule.Clients.Length; i++)
-            {
-                if (!IsDown[i] && MainModule.Clients[i].local_operation != IsDown[i])
-                {
-                    MainModule.Clients[i].stop_trigger = true;
-                }
-                MainModule.Clients[i].local_operation = IsDown[i];
-            }
-            
         }
     }

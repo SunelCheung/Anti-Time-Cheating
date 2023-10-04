@@ -1,3 +1,4 @@
+using System;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
@@ -12,9 +13,8 @@ public class MainModule: MonoBehaviour
     public static PlayerProxy PlayerProxy;
     public static ClientLocal[] Clients = { new(1), new(2) };
     public static ServerLogic Server = new();
-    private static float lastFixedTime = 0f;
-    // private static int _frame = 0;
-    // public int Frame => _frame;
+    private static float curFixedTime;
+    private static float lastUpdateTime;
 
     public void Awake()
     {
@@ -22,33 +22,27 @@ public class MainModule: MonoBehaviour
         InputManager = gameObject.GetOrAddComponent<InputManager>();
         PlayerProxy = gameObject.GetOrAddComponent<PlayerProxy>();
     }
-
+    
     public void Update()
     {
         NetworkManager.ProcessPacket();
-        // while(true){
-        //     if(lastFixedTime < (_frame + 1) * frameInterval)
-        //     {
-        //         break;
-        //     }
-        //     if (Time.fixedTime - lastFixedTime < frameInterval)
-        //     {
-        //         continue;
-        //     }
-        //     lastFixedTime = Time.fixedTime;
-        //     runningTime += lastFixedTime;
-        //     _frame += 1;
-            if (Time.fixedTime - lastFixedTime >= frameInterval)
+        
+        if (curFixedTime - lastUpdateTime >= frameInterval)
+        {
+            foreach (var client in Clients)
             {
-                lastFixedTime = Time.fixedTime;
-                foreach (var client in Clients)
-                {
-                    client.Update();
-                }
-                Server.Update();
-                // Debug.Log(Clients[1]);
+                client.Update();
             }
-        // }
+            Server.Update();
+            lastUpdateTime += frameInterval;
+        }
+
+        curFixedTime += Time.deltaTime;
+    }
+
+    public void FixedUpdate()
+    {
+        // curFixedTime += Time.fixedDeltaTime;
     }
 }
 
