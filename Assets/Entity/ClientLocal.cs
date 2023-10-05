@@ -37,12 +37,17 @@ public class ClientLocal
         {
             case NetworkPacket.Type.State:
                 world.CopyFrom(packet.content as World);
+                if (MainModule.Instance.Lockstep)
+                {
+                    last_ack_frame = world.frame;
+                }
                 break;
             case NetworkPacket.Type.Ack:
                 int frame = (int)packet.content;
                 ping = (int)((DateTime.Now - pkg_sent_time[frame]) / 2).TotalMilliseconds;
                 pkg_sent_time.Remove(frame);
-                unack_inst.Remove(frame);
+                if (!MainModule.Instance.Lockstep)
+                    unack_inst.Remove(frame);
                 break;
             default:
                 throw new InvalidDataException($"invalid packet:{packet.type}");
@@ -51,21 +56,24 @@ public class ClientLocal
     
     public void Update()
     {
-        if (currentFrame - drop_threshold > last_ack_frame)
+        if (!MainModule.Instance.Lockstep)
         {
-            last_ack_frame = currentFrame - drop_threshold;
-            unack_inst.Remove(last_ack_frame);
-        }
-        else
-        {
-            for (int i = last_ack_frame; i < currentFrame; i++)
+            if (currentFrame - drop_threshold > last_ack_frame)
             {
-                if (unack_inst.ContainsKey(i+1))
+                last_ack_frame = currentFrame - drop_threshold;
+                unack_inst.Remove(last_ack_frame);
+            }
+            else
+            {
+                for (int i = last_ack_frame; i < currentFrame; i++)
                 {
-                    break;
-                }
+                    if (unack_inst.ContainsKey(i+1))
+                    {
+                        break;
+                    }
             
-                last_ack_frame++;
+                    last_ack_frame++;
+                }
             }
         }
 
